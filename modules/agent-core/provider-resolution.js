@@ -22,6 +22,7 @@ export const TOOL_MODE_OPTIONS = Object.freeze([
 export const PROVIDER_OPTIONS = Object.freeze([
     { value: 'openai-responses', label: 'OpenAI Responses' },
     { value: 'openai-compatible', label: 'OpenAI 兼容' },
+    { value: 'littlewhitebox-relay', label: 'OpenAI 兼容（经小白盒中转）' },
     { value: 'sillytavern-openai-compatible', label: '酒馆 OpenAI 兼容' },
     { value: 'sillytavern-claude', label: '酒馆 Claude' },
     { value: 'sillytavern-google', label: '酒馆 Google AI' },

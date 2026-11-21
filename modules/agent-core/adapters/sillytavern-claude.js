@@ -15,6 +15,7 @@ import {
 } from '../reasoning-capabilities.js';
 import { isReasoningOutputVisible } from '../reasoning-config.js';
 import { stripToolProtocolMarker } from './tool-protocol-marker.js';
+import { normalizeAgentHeaders } from '../request-headers.js';
 
 function cloneJson(value) {
     if (value === undefined) return undefined;
@@ -427,6 +428,7 @@ export class SillyTavernClaudeAdapter {
         const request = await this.hostClient.buildHostChatCompletionGenerateRequest(
             payload,
             true,
+            normalizeAgentHeaders(this.config.headers),
         );
         return this.buildRequestInspection(request, protocol, task, effectiveReasoning);
     }
@@ -482,7 +484,8 @@ export class SillyTavernClaudeAdapter {
 
         try {
             const accumulator = createClaudeStreamAccumulator(task, effectiveReasoning, this.config);
-            await this.hostClient.streamHostChatCompletion(payload, event => accumulator.accept(event), { signal: task.signal, onRequest });
+            await this.hostClient.streamHostChatCompletion(payload, event => accumulator.accept(event),
+                { signal: task.signal, onRequest, extraHeaders: normalizeAgentHeaders(this.config.headers) });
             return { ...accumulator.result(), requestInspection };
         } catch (error) {
             if (requestInspection && error && typeof error === 'object') {

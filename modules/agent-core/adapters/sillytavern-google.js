@@ -13,6 +13,7 @@ import { resolveTaskReasoning } from '../reasoning-capabilities.js';
 import { isReasoningOutputVisible } from '../reasoning-config.js';
 import { stripToolProtocolMarker } from './tool-protocol-marker.js';
 import { prepareGoogleToolParameters } from './google-tool-schema.js';
+import { normalizeAgentHeaders } from '../request-headers.js';
 
 function cloneJson(value) {
     if (value === undefined) return undefined;
@@ -339,6 +340,7 @@ export class SillyTavernGoogleAdapter {
         const request = await this.hostClient.buildHostChatCompletionGenerateRequest(
             payload,
             true,
+            normalizeAgentHeaders(this.config.headers),
         );
         return this.buildRequestInspection(request, task, effectiveReasoning);
     }
@@ -383,7 +385,8 @@ export class SillyTavernGoogleAdapter {
 
         try {
             const accumulator = createGoogleStreamAccumulator(task, effectiveReasoning, this.config);
-            await this.hostClient.streamHostChatCompletion(payload, event => accumulator.accept(event), { signal: task.signal, onRequest });
+            await this.hostClient.streamHostChatCompletion(payload, event => accumulator.accept(event),
+                { signal: task.signal, onRequest, extraHeaders: normalizeAgentHeaders(this.config.headers) });
             return { ...accumulator.result(), requestInspection };
         } catch (error) {
             if (requestInspection && error && typeof error === 'object') {

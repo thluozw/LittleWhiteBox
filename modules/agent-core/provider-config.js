@@ -2,6 +2,7 @@ import { AnthropicAdapter } from './adapters/anthropic.js';
 import { GoogleAdapter } from './adapters/google.js';
 import { GoogleVertexAdapter } from './adapters/google-vertex.js';
 import { VERTEX_PROVIDER } from './vertex-config.js';
+import { RELAY_TRANSPORT_ID } from './relay-transport.js';
 import { OpenAICompatibleAdapter } from './adapters/openai-compatible.js';
 import { OpenAIResponsesAdapter } from './adapters/openai-responses.js';
 import { SillyTavernClaudeAdapter } from './adapters/sillytavern-claude.js';
@@ -39,6 +40,8 @@ export function createAgentAdapter(providerConfig = {}, options = {}) {
             return new AnthropicAdapter(providerConfig);
         case 'google':
             return new GoogleAdapter(providerConfig);
+        case 'littlewhitebox-relay':
+            return new OpenAICompatibleAdapter({ ...providerConfig, transport: RELAY_TRANSPORT_ID });
         case 'openai-compatible':
         default:
             return new OpenAICompatibleAdapter(providerConfig);

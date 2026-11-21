@@ -1,3 +1,16 @@
+import { mergeRequestHeaders, normalizeAgentHeaders } from './request-headers.js';
+import { createRelayFetch, hasRelayTransport } from './relay-transport.js';
+
+// A relay-configured preset sends the request through the Tavern process, which
+// keeps transport-owned headers (notably `user-agent`) and skips browser CORS.
+function buildFetchCheckpoint(requestHeaders, presetConfig) {
+    if (hasRelayTransport(presetConfig)) {
+        const relay = createRelayFetch({ timeoutMs: presetConfig?.timeoutMs });
+        return (input, options) => relay(input, { ...options, headers: requestHeaders });
+    }
+    return (input, options) => globalThis.fetch(input, { ...options, headers: requestHeaders });
+}
+
 // SDK compatibility belongs here, never in saved presets or individual Agent apps.
 const OPENAI_NO_AUTH_PLACEHOLDER = 'agent-core-no-auth';
 // Keep the existing Messages wire version when upgrading the SDK.
@@ -7,22 +20,32 @@ export function normalizeAgentApiKey(value) {
     return String(value ?? '').trim();
 }
 
-export function resolveAgentAuth(provider, value) {
+/**
+ * Resolve protocol authentication for a provider, then layer the user's explicit
+ * request headers on top. Custom headers are the only source of extra identity:
+ * ambient SDK/environment headers are never read, matching the existing
+ * environment-isolation guarantee.
+ * @param {string} provider Provider id used by the adapter.
+ * @param {unknown} value Configured API key.
+ * @param {unknown} [customHeaders] User-configured headers (object or text).
+ * @returns {object} Authentication material, effective headers and SDK options.
+ */
+export function resolveAgentAuth(provider, value, customHeaders, options = {}) {
     const apiKey = normalizeAgentApiKey(value);
+    const custom = normalizeAgentHeaders(customHeaders);
     if (provider === 'google') {
         // @google/genai accepts an explicitly empty header in browser and Node.
         // Remove this override when the SDK exposes a credential-free Gemini mode.
-        const headers = { 'x-goog-api-key': apiKey };
+        const headers = mergeRequestHeaders({ 'x-goog-api-key': apiKey }, custom);
         return { apiKey, headers, sdkOptions: { apiKey, vertexai: false } };
     }
     if (provider === 'anthropic') {
-        const headers = apiKey ? { 'x-api-key': apiKey } : {};
-        const requestHeaders = {
+        const headers = mergeRequestHeaders(apiKey ? { 'x-api-key': apiKey } : {}, custom);
+        const requestHeaders = mergeRequestHeaders({
             'Content-Type': 'application/json', Accept: 'application/json',
             'anthropic-version': ANTHROPIC_API_VERSION,
             'anthropic-dangerous-direct-browser-access': 'true',
-            ...headers,
-        };
+        }, { ...headers });
         return {
             apiKey,
             headers,
@@ -35,12 +58,12 @@ export function resolveAgentAuth(provider, value) {
                 defaultHeaders: { ...requestHeaders, 'X-Api-Key': apiKey || null, Authorization: null },
                 // SDK 1.x also imports arbitrary ANTHROPIC_CUSTOM_HEADERS from
                 // the environment. Only this preset may supply request identity.
-                fetch: (input, options) => globalThis.fetch(input, { ...options, headers: requestHeaders }),
+                fetch: buildFetchCheckpoint(requestHeaders, options),
             },
         };
     }
-    const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
-    const requestHeaders = { 'Content-Type': 'application/json', Accept: 'application/json', ...headers };
+    const headers = mergeRequestHeaders(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}, custom);
+    const requestHeaders = mergeRequestHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' }, headers);
     return {
         apiKey,
         headers,
@@ -57,7 +80,7 @@ export function resolveAgentAuth(provider, value) {
             // headers (which can contain credentials under arbitrary names).
             // Override Content-Type above before SDK encoding; isolate all headers
             // at its public fetch boundary without changing process-wide state.
-            fetch: (input, options) => globalThis.fetch(input, { ...options, headers: requestHeaders }),
+            fetch: buildFetchCheckpoint(requestHeaders, options),
         },
     };
 }

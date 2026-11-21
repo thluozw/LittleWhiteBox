@@ -15,6 +15,7 @@ export function createPreset(id, name, input = {}) {
         baseUrl: input.baseUrl ?? '', apiKey: input.apiKey ?? '', model: input.model ?? '',
         vertex: normalizeVertexConfig(input.vertex),
         prefixMode: input.prefixMode ?? 'auto', customPrefix: input.customPrefix ?? '',
+        headers: String(input.headers ?? ''),
         stream: input.stream ?? true, temperature: input.temperature ?? null,
         maxTokens: input.maxTokens ?? null, sampling: structuredClone(input.sampling ?? {}),
         reasoning: structuredClone(input.reasoning ?? {}), modelListAuth: input.modelListAuth ?? DEFAULT_MODEL_LIST_AUTH,
@@ -25,6 +26,7 @@ export function assertPreset(preset) {
     const providers = [HOST_PROVIDER, ...PROVIDER_OPTIONS.map(option => option.value)];
     if (!preset || !providers.includes(preset.provider)
         || !['baseUrl', 'apiKey', 'model', 'customPrefix'].every(key => typeof preset[key] === 'string')
+        || (preset.headers != null && typeof preset.headers !== 'string')
         || !['auto', 'custom'].includes(preset.prefixMode)
         || typeof preset.stream !== 'boolean'
         || [preset.temperature, preset.maxTokens].some(value => value != null && !Number.isFinite(value))

@@ -1,5 +1,6 @@
 import { pullModelsForProvider } from '../model-list.js';
 export { pullModelsForProvider } from '../model-list.js';
+import { formatAgentHeaders, normalizeAgentHeaders } from '../request-headers.js';
 import {
     AGENT_JSAPI_PERMISSION_OPTIONS,
     AGENT_PERMISSION_MODE_OPTIONS,
@@ -224,6 +225,7 @@ export function createAgentSettingsPanel(deps = {}) {
             delegateBaseUrl: String(delegateProviderConfig.baseUrl || ''),
             delegateModel: String(delegateProviderConfig.model || ''),
             delegateApiKey: String(delegateProviderConfig.apiKey || ''),
+            delegateHeaders: formatAgentHeaders(delegateProviderConfig.headers),
             delegateVertex: normalizeVertexConfig(delegateProviderConfig.vertex),
             delegateModelListAuth: delegateProviderConfig.modelListAuth,
             delegateTemperature: normalizeTemperature(delegateProviderConfig.temperature, 1),
@@ -244,6 +246,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: String(providerConfig.baseUrl || ''),
             model: String(providerConfig.model || ''),
             apiKey: String(providerConfig.apiKey || ''),
+            headers: formatAgentHeaders(providerConfig.headers),
             vertex: normalizeVertexConfig(providerConfig.vertex),
             modelListAuth: providerConfig.modelListAuth,
             temperature: normalizeTemperature(providerConfig.temperature, 1),
@@ -321,6 +324,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl,
             model,
             apiKey: root.querySelector('#xb-assistant-api-key')?.value.trim() || '',
+            headers: root.querySelector('#xb-assistant-headers')?.value ?? draft.headers ?? '',
             vertex: readVertexSettings(root, draft.vertex),
             modelListAuth: root.querySelector('#xb-assistant-model-list-auth')?.value ?? draft.modelListAuth,
             temperature: normalizeTemperature(root.querySelector('#xb-assistant-temperature')?.value, draft.temperature ?? 1),
@@ -334,6 +338,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: delegateBaseUrl,
             model: delegateModel,
             apiKey: root.querySelector('#xb-assistant-delegate-api-key')?.value.trim() ?? draft.delegateApiKey ?? '',
+            headers: root.querySelector('#xb-assistant-delegate-headers')?.value ?? draft.delegateHeaders ?? '',
             vertex: readVertexSettings(root, draft.delegateVertex, 'delegate'),
             modelListAuth: root.querySelector('#xb-assistant-delegate-model-list-auth')?.value ?? draft.delegateModelListAuth,
             temperature: normalizeTemperature(root.querySelector('#xb-assistant-delegate-temperature')?.value, draft.delegateTemperature ?? 1),
@@ -351,6 +356,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: providerConfig.baseUrl,
             model: providerConfig.model,
             apiKey: providerConfig.apiKey,
+            headers: providerConfig.headers,
             vertex: normalizeVertexConfig(providerConfig.vertex),
             modelListAuth: providerConfig.modelListAuth,
             temperature: providerConfig.temperature,
@@ -393,6 +399,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: String(draft.baseUrl || ''),
             model: String(draft.model || ''),
             apiKey: String(draft.apiKey || ''),
+            headers: normalizeAgentHeaders(draft.headers),
             vertex: normalizeVertexConfig(draft.vertex),
             modelListAuth: draft.modelListAuth,
             temperature: normalizeTemperature(draft.temperature, 1),
@@ -413,6 +420,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: String(draft.delegateBaseUrl || ''),
             model: String(draft.delegateModel || ''),
             apiKey: String(draft.delegateApiKey || ''),
+            headers: normalizeAgentHeaders(draft.delegateHeaders),
             vertex: normalizeVertexConfig(draft.delegateVertex),
             modelListAuth: draft.delegateModelListAuth,
             temperature: normalizeTemperature(draft.delegateTemperature, 1),
@@ -442,6 +450,7 @@ export function createAgentSettingsPanel(deps = {}) {
             baseUrl: draft.baseUrl || '',
             model: draft.model || '',
             apiKey: draft.apiKey || '',
+            headers: normalizeAgentHeaders(draft.headers),
             ...vertexRuntimeFields(draft.provider, draft),
             ...(supportsModelListAuth(draft.provider) ? { modelListAuth: normalizeModelListAuth(draft.modelListAuth, draft.provider) } : {}),
             ...normalizeWebSettings(draft),
@@ -693,6 +702,8 @@ export function createAgentSettingsPanel(deps = {}) {
         if (baseUrlInput) baseUrlInput.value = draft.baseUrl || '';
         if (modelInput) modelInput.value = draft.model || '';
         if (apiKeyInput) apiKeyInput.value = draft.apiKey || '';
+        const headersInput = root.querySelector('#xb-assistant-headers');
+        if (headersInput) headersInput.value = draft.headers || '';
         syncVertexSettings(root, provider, draft.vertex);
         syncBaseUrlHint(root, provider);
         syncModelListAuthControls(root, provider, draft.modelListAuth);
@@ -720,6 +731,8 @@ export function createAgentSettingsPanel(deps = {}) {
         if (delegateBaseUrlInput) delegateBaseUrlInput.value = draft.delegateBaseUrl || '';
         if (delegateModelInput) delegateModelInput.value = draft.delegateModel || '';
         if (delegateApiKeyInput) delegateApiKeyInput.value = draft.delegateApiKey || '';
+        const delegateHeadersInput = root.querySelector('#xb-assistant-delegate-headers');
+        if (delegateHeadersInput) delegateHeadersInput.value = draft.delegateHeaders || '';
         syncVertexSettings(root, delegateProvider, draft.delegateVertex, 'delegate');
         syncBaseUrlHint(root, delegateProvider, 'delegate');
         syncModelListAuthControls(root, delegateProvider, draft.delegateModelListAuth, 'delegate');
@@ -1201,6 +1214,10 @@ export function createAgentSettingsPanel(deps = {}) {
             syncConfigDraft(root);
         });
 
+        root.querySelector('#xb-assistant-headers')?.addEventListener('input', () => {
+            syncConfigDraft(root);
+        });
+
         for (const prefix of ['#xb-assistant', '#xb-assistant-delegate']) {
             root.querySelector(`${prefix}-model-list-auth`)?.addEventListener('change', () => {
                 syncConfigDraft(root);
@@ -1258,6 +1275,10 @@ export function createAgentSettingsPanel(deps = {}) {
         });
 
         root.querySelector('#xb-assistant-delegate-api-key')?.addEventListener('input', () => {
+            syncConfigDraft(root);
+        });
+
+        root.querySelector('#xb-assistant-delegate-headers')?.addEventListener('input', () => {
             syncConfigDraft(root);
         });
 

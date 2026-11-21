@@ -1,4 +1,5 @@
 import { createAgentAdapter } from '../agent-core/provider-config.js';
+import { RELAY_TRANSPORT_ID as RELAY_PROVIDER } from '../agent-core/relay-transport.js';
 import { getModelListApiPrefix, pullModelsForProvider } from '../agent-core/model-list.js';
 import { resolveRuntimeReasoning } from '../agent-core/reasoning-capabilities.js';
 import { getDefaultApiPrefix, resolveApiBaseUrl } from '../../shared/common/openai-url-utils.js';
@@ -73,7 +74,13 @@ export async function generateText(preset, { messages, signal, onDelta, timeoutM
             const config = resolveConnection(snapshot);
             if (!config.model.trim()) throw new Error(COPY.modelRequired);
             if (config.provider !== VERTEX_PROVIDER && !config.baseUrl.trim()) throw new Error(COPY.urlRequired);
-            const adapter = (dependencies.createAdapter || createAgentAdapter)({ ...config, timeoutMs });
+            // The relay channel must forward through the Tavern process; name the
+            // transport here as well so it survives any preset reshaping.
+            const adapter = (dependencies.createAdapter || createAgentAdapter)({
+                ...config,
+                ...(config.provider === RELAY_PROVIDER ? { transport: RELAY_PROVIDER } : {}),
+                timeoutMs,
+            });
             let previous = '';
             const result = await adapter.chat({
                 messages, signal: controller.signal, reasoning: config.reasoning,

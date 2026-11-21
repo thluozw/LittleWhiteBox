@@ -2,6 +2,7 @@ import { normalizeWebApiKey, normalizeWebBaseUrl, normalizeWebSettings } from '.
 import { normalizeReasoningConfig } from './reasoning-config.js';
 import { normalizeSampling } from './sampling.js';
 import { normalizeAgentApiKey } from './provider-auth.js';
+import { normalizeAgentHeaders } from './request-headers.js';
 import { DEFAULT_MODEL_LIST_AUTH } from './model-list-auth.js';
 import { normalizeVertexConfig } from './vertex-config.js';
 
@@ -65,6 +66,7 @@ export function normalizeAgentPreset(source = {}) {
         baseUrl: String(source.baseUrl ?? 'https://api.openai.com/v1'),
         model: String(source.model ?? 'gpt-4o-mini'),
         apiKey: normalizeAgentApiKey(source.apiKey),
+        headers: normalizeAgentHeaders(source.headers),
         vertex: normalizeVertexConfig(source.vertex),
         modelListAuth: String(source.modelListAuth ?? DEFAULT_MODEL_LIST_AUTH),
         temperature: source.temperature ?? 1,

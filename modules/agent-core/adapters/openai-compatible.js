@@ -1126,7 +1126,7 @@ function describeStreamedResponse(snapshot, finishReason, model) {
 export class OpenAICompatibleAdapter {
     constructor(config) {
         this.config = config;
-        this.auth = resolveAgentAuth('openai-compatible', config.apiKey);
+        this.auth = resolveAgentAuth('openai-compatible', config.apiKey, config.headers, config);
         this.client = new OpenAI({
             ...this.auth.sdkOptions,
             baseURL: String(config.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, ''),

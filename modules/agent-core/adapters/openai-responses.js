@@ -345,7 +345,7 @@ function comparePartKeys(left, right) {
 export class OpenAIResponsesAdapter {
     constructor(config) {
         this.config = config;
-        this.auth = resolveAgentAuth('openai-responses', config.apiKey);
+        this.auth = resolveAgentAuth('openai-responses', config.apiKey, config.headers, config);
         this.client = new OpenAI({
             ...this.auth.sdkOptions,
             baseURL: String(config.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, ''),

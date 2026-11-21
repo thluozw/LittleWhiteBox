@@ -45,7 +45,10 @@ export function mountTextApiSettings(root, { feature, namespace }) {
     function request(action, extra = {}) {
         const requestId = createIdentifier();
         return new Promise((resolve, reject) => {
-            const timer = win.setTimeout(() => { requests.delete(requestId); reject(new Error(COPY.timeout)); }, 190000);
+            // Loading the saved presets is local work; only generation needs the long
+            // deadline. A short one surfaces a broken bridge instead of spinning forever.
+            const deadlineMs = action === 'load' || action === 'mutate' ? 20000 : 190000;
+            const timer = win.setTimeout(() => { requests.delete(requestId); reject(new Error(COPY.timeout)); }, deadlineMs);
             requests.set(requestId, { resolve, reject, timer, action });
             win.parent.postMessage({ source: namespace, type: 'TEXT_API_REQUEST', requestId, action, ...extra }, origin);
         });
@@ -66,6 +69,13 @@ export function mountTextApiSettings(root, { feature, namespace }) {
         if (type === 'number') { node.step = 'any'; node.placeholder = COPY.inherit; }
         if (type === 'password') node.autocomplete = 'off';
         node.oninput = () => { source[key] = type === 'number' ? (node.value === '' ? null : Number(node.value)) : node.value; revision++; feedback(''); };
+        return node;
+    }
+    function textArea(key, source = draft) {
+        const node = element('textarea');
+        node.rows = 3; node.spellcheck = false; node.placeholder = COPY.headersHint;
+        node.value = source[key] ?? '';
+        node.oninput = () => { source[key] = node.value; revision++; feedback(''); };
         return node;
     }
     function select(options, value, change) {
@@ -217,6 +227,9 @@ export function mountTextApiSettings(root, { feature, namespace }) {
             modelInput.onchange = () => renderParameters();
             control(COPY.model, modelInput);
             if (supportsModelListAuth(draft.provider)) control(COPY.modelListAuth, select(getModelListAuthOptions(draft.provider), normalizeModelListAuth(draft.modelListAuth, draft.provider), value => { draft.modelListAuth = value; }));
+            // The Tavern-current channel builds its headers inside SillyTavern, so
+            // only explicit API channels can carry configured headers.
+            control(COPY.headers, textArea('headers'));
         }
         const modelList = select([{ value: '', label: COPY.manual }], '', value => { if (value) { draft.model = value; render(); } });
         modelList.hidden = true; modelList.setAttribute('aria-label', COPY.pull);
@@ -279,5 +292,13 @@ export function mountTextApiSettings(root, { feature, namespace }) {
         finally { fields.disabled = !settings; }
     }
     retry.onclick = refresh;
+    // The host page refreshes this panel when its settings dialog opens. A panel
+    // that mounts while already visible — or a dialog that aborts before reaching
+    // its refresh call — would otherwise stay blank with no reachable retry, so
+    // load once on our own; `busy`/`settings` keep this from double-loading.
+    queueMicrotask(() => {
+        if (busy || settings) return;
+        refresh().catch(error => { feedback(error.message, true); retry.hidden = false; });
+    });
     return { refresh() { refresh().catch(error => feedback(error.message, true)); }, destroy() { revision++; cancelRequests(); saveFeedback.destroy(); win.removeEventListener('message', receive); for (const pending of requests.values()) { win.clearTimeout(pending.timer); pending.reject(new Error(COPY.cancelled)); } requests.clear(); } };
 }

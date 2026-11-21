@@ -678,7 +678,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/anthropic.js",
       "relativePath": "modules/agent-core/adapters/anthropic.js",
       "extension": ".js",
-      "sizeBytes": 21682
+      "sizeBytes": 21698
     },
     {
       "source": "littlewhitebox",
@@ -720,7 +720,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/google.js",
       "relativePath": "modules/agent-core/adapters/google.js",
       "extension": ".js",
-      "sizeBytes": 36143
+      "sizeBytes": 36159
     },
     {
       "source": "littlewhitebox",
@@ -734,14 +734,14 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/openai-compatible.js",
       "relativePath": "modules/agent-core/adapters/openai-compatible.js",
       "extension": ".js",
-      "sizeBytes": 61481
+      "sizeBytes": 61497
     },
     {
       "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/openai-responses.js",
       "relativePath": "modules/agent-core/adapters/openai-responses.js",
       "extension": ".js",
-      "sizeBytes": 26002
+      "sizeBytes": 26018
     },
     {
       "source": "littlewhitebox",
@@ -755,21 +755,21 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/sillytavern-claude.js",
       "relativePath": "modules/agent-core/adapters/sillytavern-claude.js",
       "extension": ".js",
-      "sizeBytes": 19678
+      "sizeBytes": 19871
     },
     {
       "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/sillytavern-google.js",
       "relativePath": "modules/agent-core/adapters/sillytavern-google.js",
       "extension": ".js",
-      "sizeBytes": 14495
+      "sizeBytes": 14688
     },
     {
       "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/adapters/sillytavern-openai-compatible.js",
       "relativePath": "modules/agent-core/adapters/sillytavern-openai-compatible.js",
       "extension": ".js",
-      "sizeBytes": 13072
+      "sizeBytes": 13319
     },
     {
       "source": "littlewhitebox",
@@ -818,7 +818,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/config.js",
       "relativePath": "modules/agent-core/config.js",
       "extension": ".js",
-      "sizeBytes": 11321
+      "sizeBytes": 11439
     },
     {
       "source": "littlewhitebox",
@@ -839,7 +839,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/model-list.js",
       "relativePath": "modules/agent-core/model-list.js",
       "extension": ".js",
-      "sizeBytes": 11274
+      "sizeBytes": 11370
     },
     {
       "source": "littlewhitebox",
@@ -860,7 +860,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/provider-auth.js",
       "relativePath": "modules/agent-core/provider-auth.js",
       "extension": ".js",
-      "sizeBytes": 3149
+      "sizeBytes": 3969
     },
     {
       "source": "littlewhitebox",
@@ -903,6 +903,13 @@
       "relativePath": "modules/agent-core/reasoning-config.js",
       "extension": ".js",
       "sizeBytes": 1342
+    },
+    {
+      "source": "littlewhitebox",
+      "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/request-headers.js",
+      "relativePath": "modules/agent-core/request-headers.js",
+      "extension": ".js",
+      "sizeBytes": 3115
     },
     {
       "source": "littlewhitebox",
@@ -1214,6 +1221,13 @@
     },
     {
       "source": "littlewhitebox",
+      "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/tests/request-headers.test.js",
+      "relativePath": "modules/agent-core/tests/request-headers.test.js",
+      "extension": ".js",
+      "sizeBytes": 6057
+    },
+    {
+      "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/tests/response-completion.test.js",
       "relativePath": "modules/agent-core/tests/response-completion.test.js",
       "extension": ".js",
@@ -1392,14 +1406,14 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/ui/settings-markup.js",
       "relativePath": "modules/agent-core/ui/settings-markup.js",
       "extension": ".js",
-      "sizeBytes": 18581
+      "sizeBytes": 19278
     },
     {
       "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/modules/agent-core/ui/settings-panel.js",
       "relativePath": "modules/agent-core/ui/settings-panel.js",
       "extension": ".js",
-      "sizeBytes": 67527
+      "sizeBytes": 68799
     },
     {
       "source": "littlewhitebox",
@@ -20996,6 +21010,13 @@
     },
     {
       "source": "littlewhitebox",
+      "publicPath": "scripts/extensions/third-party/LittleWhiteBox/scripts/build-no-typecheck.mjs",
+      "relativePath": "scripts/build-no-typecheck.mjs",
+      "extension": ".mjs",
+      "sizeBytes": 2420
+    },
+    {
+      "source": "littlewhitebox",
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/scripts/build-novelai-vendor.mjs",
       "relativePath": "scripts/build-novelai-vendor.mjs",
       "extension": ".mjs",
@@ -21699,7 +21720,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/shared/host-llm/chat-completions/client.js",
       "relativePath": "shared/host-llm/chat-completions/client.js",
       "extension": ".js",
-      "sizeBytes": 17186
+      "sizeBytes": 17711
     },
     {
       "source": "littlewhitebox",

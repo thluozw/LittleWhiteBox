@@ -168,7 +168,7 @@ async function pullAnthropicModels(baseUrl, providerConfig, options = {}) {
         urls: buildVersionedCandidateUrls(baseUrl, '/v1', options.baseUrlResolved),
         requestOptionsList: [{
             headers: {
-                ...resolveAgentAuth(authProvider, providerConfig.apiKey).headers,
+                ...resolveAgentAuth(authProvider, providerConfig.apiKey, providerConfig.headers, providerConfig).headers,
                 'anthropic-version': '2023-06-01',
                 Accept: 'application/json',
             },
@@ -180,7 +180,7 @@ async function pullAnthropicModels(baseUrl, providerConfig, options = {}) {
 }
 
 async function pullSillyTavernClaudeModels(providerConfig, options = {}) {
-    const auth = resolveAgentAuth('anthropic', providerConfig.apiKey);
+    const auth = resolveAgentAuth('anthropic', providerConfig.apiKey, providerConfig.headers, providerConfig);
     const customBaseUrl = normalizeBaseUrl(providerConfig.baseUrl || '');
     const baseUrl = normalizeBaseUrl(
         customBaseUrl || HOST_CHAT_COMPLETIONS_DEFAULT_REVERSE_PROXY[HOST_CHAT_COMPLETIONS_SOURCE_CLAUDE],
@@ -222,7 +222,7 @@ export async function pullModelsForProvider(providerConfig, options = {}) {
         return pullVertexModels(providerConfig, options);
     }
     const baseUrl = normalizeBaseUrl(providerConfig.baseUrl || '');
-    const auth = resolveAgentAuth(provider, providerConfig.apiKey);
+    const auth = resolveAgentAuth(provider, providerConfig.apiKey, providerConfig.headers, providerConfig);
 
     if (provider === 'sillytavern-claude') {
         return filterModels(await pullSillyTavernClaudeModels(providerConfig, options));
@@ -247,7 +247,7 @@ export async function pullModelsForProvider(providerConfig, options = {}) {
 
     if (provider === 'google') {
         const bearer = normalizeModelListAuth(providerConfig.modelListAuth, provider) === 'bearer';
-        const listAuth = bearer ? resolveAgentAuth('openai-compatible', providerConfig.apiKey) : auth;
+        const listAuth = bearer ? resolveAgentAuth('openai-compatible', providerConfig.apiKey, providerConfig.headers, providerConfig) : auth;
         return await tryCandidateFetches({
             urls: buildVersionedCandidateUrls(baseUrl, getModelListApiPrefix(providerConfig), options.baseUrlResolved)
                 .map(url => !bearer && auth.apiKey ? `${url}?key=${encodeURIComponent(auth.apiKey)}` : url),

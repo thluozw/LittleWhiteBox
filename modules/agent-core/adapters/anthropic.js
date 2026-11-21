@@ -282,7 +282,7 @@ function resolveAnthropicRequestProtocol(config = {}, task = {}) {
 export class AnthropicAdapter {
     constructor(config) {
         this.config = config;
-        this.auth = resolveAgentAuth('anthropic', config.apiKey);
+        this.auth = resolveAgentAuth('anthropic', config.apiKey, config.headers);
         this.client = new Anthropic({
             ...this.auth.sdkOptions,
             baseURL: normalizeAnthropicSdkBaseUrl(config.baseUrl),

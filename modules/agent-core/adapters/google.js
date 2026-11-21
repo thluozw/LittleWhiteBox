@@ -559,7 +559,7 @@ export class GoogleAdapter {
         this.requestModel = connection.model || config.model;
         this.requestUrl = connection.url;
         this.prepareRequest = connection.prepareRequest;
-        this.auth = connection.auth || resolveAgentAuth('google', config.apiKey);
+        this.auth = connection.auth || resolveAgentAuth('google', config.apiKey, config.headers);
         this.supportsSessionToolLoop = true;
         this.activeChat = null;
         this.sessionReasoning = null;

@@ -1,3 +1,4 @@
+import { normalizeAgentHeaders } from '../request-headers.js';
 import { readResponseCompletion } from '../runtime/response-completion.js';
 import { buildSamplingParameters } from '../sampling.js';
 import {
@@ -127,6 +128,7 @@ export class SillyTavernOpenAICompatibleAdapter {
         const request = await this.hostClient.buildHostChatCompletionGenerateRequest(
             payload,
             typeof task.onStreamProgress === 'function',
+            normalizeAgentHeaders(this.config.headers),
         );
         return this.buildRequestInspection(request, task, effectiveReasoning);
     }
@@ -201,6 +203,7 @@ export class SillyTavernOpenAICompatibleAdapter {
             signal: task.signal,
             onRequest: options.onRequest,
             onResponseAccepted: options.onResponseAccepted,
+            extraHeaders: normalizeAgentHeaders(this.config.headers),
         });
 
         assertSignedToolCallsIntact(assistantSnapshot);
@@ -228,7 +231,7 @@ export class SillyTavernOpenAICompatibleAdapter {
     async nonStreamingChat(task, payload, effectiveReasoning, options = {}) {
         const response = await this.hostClient.createHostChatCompletion(
             payload,
-            { signal: task.signal, onRequest: options.onRequest },
+            { signal: task.signal, onRequest: options.onRequest, extraHeaders: normalizeAgentHeaders(this.config.headers) },
         );
         const choice = response.choices?.[0] || {};
         const message = choice.message || {};

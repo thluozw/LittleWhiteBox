@@ -18,6 +18,9 @@ export const TEXT_API_COPY = Object.freeze({
     saveFailed: 'API 预设保存失败', timeout: '请求超时', cancelled: '请求已停止',
     emptyResponse: '接口未返回正文', hostUnavailable: '酒馆生成模块尚未加载',
     modelListAuth: '模型列表鉴权', modelCount: count => `${count} 个模型`,
+    headers: '自定义请求头',
+    headersHint: '每行一条，例如：\nx-opencode-session: your-session-id\nHTTP-Referer: https://example.com',
+    headersInvalid: '自定义请求头格式无效',
 });
 
 export function deletionMessage(name, replacement, features) {

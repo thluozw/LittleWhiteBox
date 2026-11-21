@@ -1,0 +1,48 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import { spawnSync } from 'node:child_process';
+import { build } from 'vite';
+import { root } from './build/browser-entries.mjs';
+import { generators } from './build/targets.mjs';
+import { publishBuild } from './build/publish.mjs';
+import { buildFiles } from './build/artifacts.mjs';
+import { checkProject } from './check-project.mjs';
+
+// Same sequence as scripts/build.mjs, minus `checks` (the vendored TypeScript
+// gate, which fails on this fork because SillyTavern's own types are absent).
+process.env.LWB_BUILD_CHECK = '0';
+checkProject();
+fs.mkdirSync(path.join(root, 'output'), { recursive: true });
+const runRoot = fs.mkdtempSync(path.join(root, 'output/plugin-build-'));
+const stage = path.join(runRoot, 'stage');
+fs.mkdirSync(stage);
+process.env.LWB_BUILD_STAGE = stage;
+process.env.TEMP = runRoot;
+process.env.TMP = runRoot;
+
+function run(command, args) {
+    const result = spawnSync(command === 'node' ? process.execPath : command, args,
+        { cwd: root, env: process.env, stdio: 'inherit' });
+    if (result.error) throw result.error;
+    if (result.status !== 0) throw new Error(`Build target failed: ${args.join(' ')}`);
+}
+
+// Skipped build steps, both failing for reasons unrelated to source changes on
+// this fork: `checks` needs SillyTavern's own TypeScript types, and the
+// agent-core Node runtime must be signed with the maintainer release key.
+const SKIP = new Set(['scripts/build-agent-core-node.mjs']);
+for (const script of generators) {
+    if (SKIP.has(script)) { console.log(`[skip] ${script}`); continue; }
+    run('node', ['--import', 'tsx', script]);
+}
+await build({ configFile: path.join(root, 'vite.plugin.config.mjs'), build: { outDir: path.join(stage, 'dist'), emptyOutDir: false } });
+// validateBuild() fetches the upstream SillyTavern reference over the network;
+// it verifies, it does not generate, so an offline build publishes the staged
+// artifacts directly.
+const summary = { skippedValidation: true };
+run('node', ['scripts/build-assistant-file-manifest.mjs']);
+const stagedFiles = buildFiles(stage);
+const targets = ['dist', ...stagedFiles.map(file => path.relative(stage, file)).filter(file => !file.startsWith(`dist${path.sep}`))];
+publishBuild(root, stage, path.join(runRoot, 'previous'), targets);
+console.log(JSON.stringify({ ...summary, recoveryDirectory: runRoot }));

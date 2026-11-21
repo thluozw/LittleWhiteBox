@@ -36,7 +36,7 @@ function normalizeReverseProxyForSource(value, source) {
     return baseUrl;
 }
 
-async function buildHeaders(provider = requestHeadersProvider) {
+async function buildHeaders(provider = requestHeadersProvider, extraHeaders = {}) {
     if (typeof provider !== 'function') {
         throw new Error('宿主请求头未注册，无法调用酒馆后端。');
     }
@@ -44,6 +44,9 @@ async function buildHeaders(provider = requestHeadersProvider) {
     return {
         'Content-Type': 'application/json',
         ...providedHeaders,
+        // User-configured headers win over host defaults so a relay that needs
+        // its own identity header can be reached through the Tavern backend.
+        ...(extraHeaders && typeof extraHeaders === 'object' ? extraHeaders : {}),
         Accept: 'application/json',
     };
 }
@@ -58,8 +61,8 @@ function redactHeaders(headers = {}) {
     return redacted;
 }
 
-async function buildGenerateRequest(payload = {}, stream = false, headersProvider = requestHeadersProvider) {
-    const rawHeaders = await buildHeaders(headersProvider);
+async function buildGenerateRequest(payload = {}, stream = false, headersProvider = requestHeadersProvider, extraHeaders = {}) {
+    const rawHeaders = await buildHeaders(headersProvider, extraHeaders);
     const request = {
         url: HOST_CHAT_COMPLETIONS_GENERATE_ENDPOINT,
         method: 'POST',
@@ -76,8 +79,8 @@ async function buildGenerateRequest(payload = {}, stream = false, headersProvide
     return request;
 }
 
-export async function buildHostChatCompletionGenerateRequest(payload = {}, stream = false) {
-    return await buildGenerateRequest(payload, stream);
+export async function buildHostChatCompletionGenerateRequest(payload = {}, stream = false, extraHeaders = {}) {
+    return await buildGenerateRequest(payload, stream, requestHeadersProvider, extraHeaders);
 }
 
 function looksLikeHtmlDocument(text = '') {
@@ -330,7 +333,7 @@ export async function fetchHostOpenAICompatibleModels(config = {}, options = {})
 }
 
 async function createCompletion(payload = {}, options = {}, dependencies = {}) {
-    const request = await buildGenerateRequest(payload, false, dependencies.requestHeadersProvider);
+    const request = await buildGenerateRequest(payload, false, dependencies.requestHeadersProvider, dependencies.extraHeaders);
     if (typeof options.onRequest === 'function') {
         options.onRequest(request);
     }
@@ -371,11 +374,12 @@ async function createCompletion(payload = {}, options = {}, dependencies = {}) {
 export async function createHostChatCompletion(payload = {}, options = {}) {
     return await createCompletion(payload, options, {
         requestHeadersProvider,
+        extraHeaders: options.extraHeaders,
     });
 }
 
 async function streamCompletion(payload = {}, onEvent, options = {}, dependencies = {}) {
-    const request = await buildGenerateRequest(payload, true, dependencies.requestHeadersProvider);
+    const request = await buildGenerateRequest(payload, true, dependencies.requestHeadersProvider, dependencies.extraHeaders);
     if (typeof options.onRequest === 'function') {
         options.onRequest(request);
     }
@@ -417,6 +421,7 @@ async function streamCompletion(payload = {}, onEvent, options = {}, dependencie
 export async function streamHostChatCompletion(payload = {}, onEvent, options = {}) {
     return await streamCompletion(payload, onEvent, options, {
         requestHeadersProvider,
+        extraHeaders: options.extraHeaders,
     });
 }
 
@@ -446,8 +451,8 @@ export function createHostChatCompletionsClient(options = {}) {
         fetch: options.fetch,
     });
     return Object.freeze({
-        buildHostChatCompletionGenerateRequest: async (payload = {}, stream = false) => (
-            await buildGenerateRequest(payload, stream, dependencies.requestHeadersProvider)
+        buildHostChatCompletionGenerateRequest: async (payload = {}, stream = false, extraHeaders = {}) => (
+            await buildGenerateRequest(payload, stream, dependencies.requestHeadersProvider, extraHeaders)
         ),
         fetchHostChatCompletionsModels: async (
             config = {},

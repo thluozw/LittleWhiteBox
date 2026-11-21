@@ -203,6 +203,11 @@ export function buildAgentSettingsPanelMarkup(options = {}) {
                         <button id="xb-assistant-delegate-toggle-key" type="button" class="secondary ghost">显示</button>
                     </div>
                 </label>
+                <label class="xb-assistant-headers-field">
+                    <span>自定义请求头</span>
+                    <textarea id="xb-assistant-delegate-headers" rows="3" spellcheck="false"
+                        placeholder="每行一条，例如：&#10;x-opencode-session: your-session-id"></textarea>
+                </label>
                 <label>
                     <span>Model</span>
                     <input id="xb-assistant-delegate-model" type="text" />
@@ -281,6 +286,11 @@ export function buildAgentSettingsPanelMarkup(options = {}) {
                     <input id="xb-assistant-api-key" type="password" />
                     <button id="xb-assistant-toggle-key" type="button" class="secondary ghost">显示</button>
                 </div>
+            </label>
+            <label class="xb-assistant-headers-field">
+                <span>自定义请求头</span>
+                <textarea id="xb-assistant-headers" rows="3" spellcheck="false"
+                    placeholder="每行一条，例如：&#10;x-opencode-session: your-session-id&#10;HTTP-Referer: https://example.com"></textarea>
             </label>
             <label>
                 <span>Model</span>
