@@ -1,6 +1,6 @@
 {
     "id": "littlewhitebox-server",
-    "name": "LittleWhiteBox Server",
+    "name": "小白EX Server",
     "version": "3.1.0",
     "author": "LittleWhiteBox",
     "description": "小白盒后端：提供绘图后台任务和 Exa 联网服务。"
