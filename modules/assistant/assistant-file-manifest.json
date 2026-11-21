@@ -21762,7 +21762,7 @@
       "publicPath": "scripts/extensions/third-party/LittleWhiteBox/shared/host-llm/chat-completions/client.js",
       "relativePath": "shared/host-llm/chat-completions/client.js",
       "extension": ".js",
-      "sizeBytes": 17711
+      "sizeBytes": 19262
     },
     {
       "source": "littlewhitebox",

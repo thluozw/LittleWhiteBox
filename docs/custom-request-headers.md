@@ -78,28 +78,29 @@ npm test -- agent-core/tests/request-headers.test.js agent-core/tests/provider-a
 1. **不能设置 `User-Agent`** 等传输层头，写了也会被丢弃；
 2. 上游若拒绝 CORS preflight，请求根本发不出去（`opencode.ai` 实测 `POST` 与 `OPTIONS` 都是 `ERR_FAILED`，而 `curl` 直连正常返回 200）。
 
-这种情况需要让请求从 Node 进程发出。**推荐用仓库自带的转发脚本**：
+**结论：请求要由酒馆进程发出，渠道请选「酒馆 OpenAI 兼容」。**
+
+该渠道把请求交给酒馆后端 `/api/backends/chat-completions/generate`，因此不受浏览器 CORS 限制。预设里的自定义头会被转成酒馆的 `custom_include_headers`：
+
+- 有自定义头时，请求自动切到酒馆的 `custom` 分支（`chat_completion_source: 'custom'` + `custom_url`），因为只有该分支会合并 `custom_include_headers`；`openai` 分支会丢弃它们
+- 预设的 API Key 会一并写进 `Authorization`，因为 `custom` 分支从酒馆密钥库取 key，不读 `proxy_password`
+- 因此 Base URL 填上游地址、路径前缀按常规（如 `https://opencode.ai/zen/go/v1` 用 `自动`），头照常填
+
+实测：该配置下测试连接与拉取模型均正常（31 个模型）。
+
+### 仍需要 Node 转发的场景
+
+如果某上游除了 CORS 还要求非 HTTP 语义的东西，或需要固定注入头而不想写在预设里，可用仓库自带的转发脚本：
 
 ```bash
 node scripts/relay-proxy.cjs
 ```
 
-然后把「模型连接」里的 Base URL 填成 `http://127.0.0.1:18787`，路径前缀选「自定义」并留空。实测该项配置下测试连接与拉取模型均正常（31 个模型）。
+Base URL 填 `http://127.0.0.1:18787`，路径前缀选「自定义」留空。上游用 `LWB_PROXY_UPSTREAM` 覆盖，端口用 `LWB_PROXY_PORT`。脚本只监听 `127.0.0.1` 并放行 CORS。
 
-上游可用 `LWB_PROXY_UPSTREAM` 覆盖，默认 `https://opencode.ai/zen/go/v1`；端口用 `LWB_PROXY_PORT`，默认 18787。脚本只监听 `127.0.0.1`，并放行浏览器跨域所需的 CORS 头。
+### 关于内置中转渠道（实验性）
 
-### 关于内置中转渠道（实验性，存在已知问题）
-
-代码里另有一条集成路径：渠道选「OpenAI 兼容（经小白盒中转）」，由酒馆进程转发，不必额外跑脚本。它需要 `config.yaml` 的 `enableServerPlugins: true`，并把 `server-plugin/littlewhitebox-server/` 复制为 `SillyTavern/plugins/littlewhitebox-server/`。
-
-| 文件 | 作用 |
-| --- | --- |
-| `server-plugin/littlewhitebox-server/chat-relay/routes.js` | 转发 `{url, method, headers, body, stream, timeoutMs}`，透传状态码/响应头/流式 body，规范化重复斜杠，拒收传输层头与含换行的头值 |
-| `modules/agent-core/relay-transport.js` | 把 SDK 的 `fetch` 换成走中转；CSRF 取自 `/csrf-token`（iframe 页面不能导入 `script.js`，那里没有 jQuery） |
-| `modules/agent-core/provider-auth.js` | `resolveAgentAuth(provider, key, headers, presetConfig)`，命中 relay 时替换 fetch |
-| `modules/agent-core/provider-config.js` | 新渠道映射到 `OpenAICompatibleAdapter` + relay transport |
-
-**已知问题**：中转端点本身可用（直接调用 `/api/plugins/littlewhitebox-server/v1/chat/relay` 能以真实配置拿到 `200` 与正常补全；单独构造 adapter 时其 `fetch` 也确实打到 `/csrf-token` 与中转端点），但走「模型连接 → 测试连接」的完整链路时，请求仍直连上游并被 CORS 拦下。根因尚未定位，因此**该渠道暂不建议使用**，请用上面的转发脚本。
+渠道下拉里的「OpenAI 兼容（经小白盒中转）」由 `server-plugin/littlewhitebox-server/chat-relay/routes.js` + `modules/agent-core/relay-transport.js` 实现，需要 `enableServerPlugins: true`。它在「模型连接 → 测试连接」链路上仍有已知问题，**不建议使用**，上面两条路径更可靠。
 
 ## 构建注意
 `vite.plugin.config.mjs` 用 `path.resolve(root, '../../../../..')` 把酒馆自身模块（`script.js`、`extensions.js` 等）改写为相对路径，**假定插件目录位于 `<SillyTavern>/public/scripts/extensions/third-party/<name>`**。

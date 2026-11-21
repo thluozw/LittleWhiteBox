@@ -79,8 +79,36 @@ async function buildGenerateRequest(payload = {}, stream = false, headersProvide
     return request;
 }
 
+/**
+ * Presets that carry custom headers need ST's *custom* source: the openai branch
+ * builds its own headers and silently drops anything we attach, while custom
+ * merges `custom_include_headers`. Switching here keeps the Tavern process as the
+ * sender, so no browser CORS applies and transport-owned headers survive.
+ */
+function applyCustomHeadersToPayload(payload = {}, extraHeaders = {}) {
+    const entries = Object.entries(extraHeaders || {}).filter(([, value]) => value != null && value !== '');
+    if (!entries.length) return payload;
+    const baseUrl = String(payload.custom_url || payload.reverse_proxy || '').trim();
+    if (!baseUrl) return payload;
+    const apiKey = String(payload.proxy_password || '').trim();
+    const hasAuth = entries.some(([name]) => name.toLowerCase() === 'authorization');
+    // The custom branch reads its key from ST's own secret store, so carry the
+    // preset key on the request itself.
+    if (apiKey && !hasAuth) entries.push(['Authorization', `Bearer ${apiKey}`]);
+    return {
+        ...payload,
+        chat_completion_source: 'custom',
+        custom_url: baseUrl,
+        reverse_proxy: undefined,
+        proxy_password: undefined,
+        custom_include_headers: entries.map(([name, value]) => `${name}: ${value}`).join('\n'),
+    };
+}
+
 export async function buildHostChatCompletionGenerateRequest(payload = {}, stream = false, extraHeaders = {}) {
-    return await buildGenerateRequest(payload, stream, requestHeadersProvider, extraHeaders);
+    // Custom headers ride in the payload (custom_include_headers); attaching them
+    // to the request to Tavern itself is redundant and can trip its CORS checks.
+    return await buildGenerateRequest(applyCustomHeadersToPayload(payload, extraHeaders), stream, requestHeadersProvider);
 }
 
 function looksLikeHtmlDocument(text = '') {
@@ -333,7 +361,7 @@ export async function fetchHostOpenAICompatibleModels(config = {}, options = {})
 }
 
 async function createCompletion(payload = {}, options = {}, dependencies = {}) {
-    const request = await buildGenerateRequest(payload, false, dependencies.requestHeadersProvider, dependencies.extraHeaders);
+    const request = await buildGenerateRequest(applyCustomHeadersToPayload(payload, dependencies.extraHeaders), false, dependencies.requestHeadersProvider);
     if (typeof options.onRequest === 'function') {
         options.onRequest(request);
     }
@@ -379,7 +407,7 @@ export async function createHostChatCompletion(payload = {}, options = {}) {
 }
 
 async function streamCompletion(payload = {}, onEvent, options = {}, dependencies = {}) {
-    const request = await buildGenerateRequest(payload, true, dependencies.requestHeadersProvider, dependencies.extraHeaders);
+    const request = await buildGenerateRequest(applyCustomHeadersToPayload(payload, dependencies.extraHeaders), true, dependencies.requestHeadersProvider);
     if (typeof options.onRequest === 'function') {
         options.onRequest(request);
     }
