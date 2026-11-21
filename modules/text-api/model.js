@@ -22,18 +22,26 @@ export function createPreset(id, name, input = {}) {
     };
 }
 
-export function assertPreset(preset) {
+// Name the failing field: a bare "invalid" leaves users unable to tell a bad
+// provider from an empty Base URL or a non-numeric temperature.
+function presetProblem(preset) {
     const providers = [HOST_PROVIDER, ...PROVIDER_OPTIONS.map(option => option.value)];
-    if (!preset || !providers.includes(preset.provider)
-        || !['baseUrl', 'apiKey', 'model', 'customPrefix'].every(key => typeof preset[key] === 'string')
-        || (preset.headers != null && typeof preset.headers !== 'string')
-        || !['auto', 'custom'].includes(preset.prefixMode)
-        || typeof preset.stream !== 'boolean'
-        || [preset.temperature, preset.maxTokens].some(value => value != null && !Number.isFinite(value))
-        || (preset.maxTokens != null && (!Number.isInteger(preset.maxTokens) || preset.maxTokens <= 0))
-        || Object.values(preset.sampling || {}).some(entry => entry?.enabled && !Number.isFinite(entry.value))) {
-        throw new Error(COPY.invalid);
-    }
+    if (!preset) return 'preset';
+    if (!providers.includes(preset.provider)) return `provider=${preset.provider}`;
+    const missing = ['baseUrl', 'apiKey', 'model', 'customPrefix'].find(key => typeof preset[key] !== 'string');
+    if (missing) return `${missing} 类型`;
+    if (preset.headers != null && typeof preset.headers !== 'string') return 'headers 类型';
+    if (!['auto', 'custom'].includes(preset.prefixMode)) return `prefixMode=${preset.prefixMode}`;
+    if (typeof preset.stream !== 'boolean') return 'stream 类型';
+    if ([preset.temperature, preset.maxTokens].some(value => value != null && !Number.isFinite(value))) return 'temperature/maxTokens 非数字';
+    if (preset.maxTokens != null && (!Number.isInteger(preset.maxTokens) || preset.maxTokens <= 0)) return 'maxTokens 需为正整数';
+    if (Object.values(preset.sampling || {}).some(entry => entry?.enabled && !Number.isFinite(entry.value))) return 'sampling 值非数字';
+    return null;
+}
+
+export function assertPreset(preset) {
+    const problem = presetProblem(preset);
+    if (problem) throw new Error(`${COPY.invalid}（${problem}）`);
     return preset;
 }
 
